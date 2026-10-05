@@ -1,7 +1,7 @@
 # Ethical reflection
 
 **Who needs early help? — AI for Good, Hackathon 5: Model Showdown, SDG 8**
-*[Name 1] & [Name 2]*
+*Lucas Jansze & Minhyeok Sung*
 
 Our model scores people at a vulnerable moment, just after they lost their job, and decides who gets scarce personal help first. Below are seven risks specific to this model and this data. For each one we describe the risk, the consequence for the people the model makes predictions about (job seekers aged 18–66 at the start of their unemployment), what we did about it, and what is not solved.
 
