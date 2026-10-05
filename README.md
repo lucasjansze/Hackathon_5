@@ -29,7 +29,7 @@ The help works, but modestly. UWV's own evaluation found that personal service r
 
 **Who uses the prediction.** The users are **UWV work coaches** (*werkcoaches*) who run intake for new WW claimants, and the UWV team that decides how many people can be invited early (the threshold). Work coaches are professionals with a full caseload. They need a short, explainable signal at intake, *"this person has a high risk, invite early"*, and they need to be able to explain that signal to the job seeker. They use it at one specific moment: the first weeks of a WW benefit, before the regular three-month conversation.
 
-**Who the prediction is about.** The people affected are **job seekers aged 18–66 who have just lost their job**. In our data, 23% of the job losses are of people aged 18–29, 43% of people aged 30–49 and 34% of people aged 50–66. **39%** were still not back in paid work twelve months later. That share rises steeply with age: 25% for 18–29, 36% for 30–49 and 53% for 50–66. *(✏️ after the final run: shares by gender, education and migration background from step 2f of the notebook.)*
+**Who the prediction is about.** The people affected are **job seekers aged 18–66 who have just lost their job**. In our data, 23% of the job losses are of people aged 18–29, 43% of people aged 30–49 and 34% of people aged 50–66. **39%** were still not back in paid work twelve months later. That share rises steeply with age: 25% for 18–29, 36% for 30–49 and 53% for 50–66. Women are slightly more often long-term (41%) than men (37%), lower-educated people (44%) more often than higher-educated people (33%), people who migrated to the Netherlands themselves (57%) much more often than people with a Dutch background (38%), and people with a long-standing disease (51%) more often than people without (38%).
 
 **Who is *not* the intended user.**
 - **Employers and recruiters.** They must never use a risk score to screen applicants.
@@ -42,7 +42,7 @@ The help works, but modestly. UWV's own evaluation found that personal service r
 
 The work coach already makes this decision, with an algorithm and a threshold, so we don't add a new step to their work. We give them a model they can **check and explain**. The logistic regression shows *which* characteristics raise the risk, so a coach can say *"you are invited early mainly because…"*, which a black-box score cannot do. That matters for the job seeker's trust, and it fits UWV's own choice to publish its algorithms in a public algorithm register.
 
-The simple alternative a coach could use without any model is *"invite everyone over 50"*; the notebook tests it as a baseline next to "invite nobody" (`DummyClassifier`). Inviting everyone is impossible with UWV's capacity. *(✏️ after the final run: how many of the long-term cases the age rule finds on the test set, against the recommended model at both thresholds.)* Even if machine learning beats these rules, we position the model as *support* for the coach, never as the decision-maker (section 6).
+The simple alternative a coach could use without any model is *"invite everyone over 50"*; the notebook tests it as a baseline next to "invite nobody" (`DummyClassifier`). Inviting everyone is impossible with UWV's capacity. On the test set the age rule finds only 41% of the long-term cases; the logistic regression finds 62% at the same precision (about one in two invites is needed). *(✏️ after the final run: what the recommended threshold adds.)* Even if machine learning beats these rules, we position the model as *support* for the coach, never as the decision-maker (section 6).
 
 ## 4. SDG 8
 
@@ -69,19 +69,23 @@ The notebook does the following, in order. Each step has a markdown cell explain
 
 ### Comparison table (test set, scored once)
 
-*✏️ after the final run – copied from the comparison table in step 7 of the notebook.*
+Training set 1,614 job losses, test set 405 (39% long-term in both), no person in both.
 
 | Model | Best hyperparameters | CV balanced accuracy (mean ± std) | Test precision | Test recall | Test F1 | Test balanced accuracy |
 |---|---|---|---|---|---|---|
-| **Baseline: most frequent** | – | | | | | |
-| Baseline: age ≥ 50 | threshold 50 | | | | | |
-| KNN | | | | | | |
-| Logistic regression | | | | | | |
-| Random forest | | | | | | |
+| **Baseline: most frequent** | – | 0.500 ± 0.000 | 0.000 | 0.000 | 0.000 | 0.500 |
+| Baseline: age ≥ 50 | threshold 50 | 0.603 ± 0.020 | 0.492 | 0.411 | 0.448 | 0.570 |
+| KNN | n_neighbors=7, weights=distance | 0.590 ± 0.019 | 0.467 | 0.310 | 0.373 | 0.542 |
+| **Logistic regression** | C=10, class_weight=balanced | 0.640 ± 0.018 | 0.510 | 0.620 | 0.560 | **0.620** |
+| Random forest | max_depth=12, min_samples_leaf=5, class_weight=balanced | **0.642 ± 0.022** | 0.494 | 0.538 | 0.515 | 0.593 |
+
+Train / CV / test balanced accuracy: logistic regression 0.69 / 0.64 / 0.62 (mild overfitting), random forest 0.85 / 0.64 / 0.59 (clear overfitting), KNN 1.00 / 0.59 / 0.54 (memorises the training data).
 
 ## 6. Recommendation
 
-*✏️ after the final run:* which model (the best and most stable cross-validation score; if models are within the spread over the folds, the one a coach can explain), which threshold (step 9a: the share of people invited against the share of long-term cases found – a capacity decision for UWV), and how good it really is.
+**We recommend the logistic regression, as support for the work coach and not as the decision-maker.** In cross-validation it is as good as the random forest (0.640 ± 0.018 against 0.642 ± 0.022: a difference of 0.002, far smaller than the spread over the folds). It overfits much less (the forest scores 0.85 on its own training data), it holds up better on the test set (0.620 against 0.593), and a work coach can explain its prediction to the job seeker. KNN is clearly weaker and on the test set even below the age rule. We decided this rule – *equal in cross-validation, then the explainable model* – before looking at the test set.
+
+**Is it good enough? Not to decide alone.** A balanced accuracy of 0.62 means that in both groups roughly four in ten people are classified wrongly. *(✏️ after the final run: the threshold advice from step 9a and which groups the model misses, from step 8.)*
 
 **What holds whatever the numbers turn out to be:**
 - The score may only **add** people to the early-invitation list. A low score must never mean less help.
