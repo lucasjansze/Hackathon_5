@@ -1,71 +1,74 @@
-# Who needs early help? Predicting long-term unemployment for UWV
+# Who needs early help?
 
-**Hackathon 5 – Model Showdown · SDG 8 Decent Work and Economic Growth · De Haagse Hogeschool**
-Team: *[Name 1] & [Name 2]*
+**AI for Good — Hackathon 5: Model Showdown**
+*[Name 1] & [Name 2]*
 
-Notebook: [`uwv_long_term_unemployment.ipynb`](uwv_long_term_unemployment.ipynb) · Data: [`data/`](data/README.md) · Variables: [`docs/liss_overview.md`](docs/liss_overview.md) · Plan: [`docs/Plan_UWV_Hackathon5.docx`](docs/Plan_UWV_Hackathon5.docx)
+A scikit-learn model that predicts, at the moment someone loses their job, whether they will still be without paid work a year later – so that UWV's work coaches can invite the people who need it most for an early face-to-face conversation.
 
-> **Privacy.** This project uses LISS panel data, which may not be redistributed. The data is **not** in this repository, and the notebook shows no individual people: only counts, percentages, averages and model scores for groups, with groups smaller than 10 people hidden. See [section 7](#7-ethical-reflection) and the first cells of the notebook.
+| | |
+|---|---|
+| Notebook | [`uwv_long_term_unemployment.ipynb`](uwv_long_term_unemployment.ipynb): raw LISS files in, comparison table and a prediction for a new job seeker out (run with outputs saved) |
+| Ethical reflection | [`ETHICS.md`](ETHICS.md) |
+| Data | LISS panel, not included – how to get it: [`data/README.md`](data/README.md) |
+| All variables, question texts and answer codes | [`docs/liss_overview.md`](docs/liss_overview.md) (made by [`scripts/liss_inventory.py`](scripts/liss_inventory.py); no respondent data) |
+| Project plan | [`docs/Plan_UWV_Hackathon5.docx`](docs/Plan_UWV_Hackathon5.docx) (written when we still used ESS data) |
+| Slides | *TODO: add our slides* |
+| Tool | scikit-learn 1.9: KNN, logistic regression and random forest |
+| SDG | SDG 8 Decent Work and Economic Growth, target 8.5 |
 
-> **Status.** Sections marked *✏️ after the final run* are filled in with the numbers of the notebook once it has been run on the LISS data and pushed with its outputs.
+> **Privacy.** The LISS data may not be redistributed, so it is not in this repository (`data/liss/` is in `.gitignore`). The notebook shows no individual people: only counts, percentages, averages and model scores for groups, and groups smaller than 10 people are hidden. People in LISS have no names, only an encrypted number, which we never display.
 
 ---
 
-## 1. The problem
+## Problem definition
 
-When people in the Netherlands lose their job, most of them claim unemployment benefit (WW) from UWV. At the end of December 2025 there were **191,500 running WW benefits**, almost 10% more than a year earlier ([UWV, Sociale zekerheid in 2025](https://www.uwv.nl/nl/publicaties/jaar-en-tertaalverslagen/2025/sociale-zekerheid-in-2025-stijging-wia-instroom-vlakt-af)). CBS reported in September 2025 that unemployed people are searching for work slightly longer than before ([CBS, Werklozen iets langer op zoek naar werk](https://www.cbs.nl/nl-nl/nieuws/2025/38/werklozen-iets-langer-op-zoek-naar-werk)).
+When people in the Netherlands lose their job, most of them claim unemployment benefit (WW) from UWV. At the end of December 2025 there were **191,500 running WW benefits**, almost 10% more than a year earlier (UWV, 2026), and CBS reported in September 2025 that unemployed people are searching for work slightly longer than before (CBS, 2025).
 
-Long-term unemployment, meaning a year or more, matters because it becomes self-reinforcing: skills and networks fade, and employers become hesitant. It also has a hard financial edge. WW lasts at most 24 months, and after that comes *bijstand* (social assistance), where people first have to use up their savings and their partner's income counts.
+Long-term unemployment, meaning a year or more, becomes self-reinforcing: skills and networks fade, and employers become hesitant. It also has a hard financial edge. WW lasts at most 24 months, and after that comes *bijstand* (social assistance), where people first have to use up their savings and their partner's income counts.
 
-UWV tries to prevent this with personal help, but counsellor time is limited. At the start of every WW benefit, UWV's algorithm **Werkverkenner** estimates the chance that the person is back at work within 12 months. People below 50% are invited early for a face-to-face conversation with a work coach. The others start with online services and are seen in person after about three months ([UWV algorithm register](https://www.uwv.nl/nl/over-uwv/algoritmeregister-uwv/werkverkenner)).
-
-The help works, but modestly. UWV's own evaluation found that personal service raises the chance of work by about **2 percentage points** within a year, with about €201 million in societal benefits against €97 million in costs ([UWV 2021](https://www.uwv.nl/nl/publicaties/kennis/2021/effect-persoonlijke-dienstverlening-op-werkkans-en-ww-duur)). So it matters *who* gets that early conversation.
+UWV tries to prevent this with personal help, but counsellor time is limited. At the start of every WW benefit, UWV's algorithm **Werkverkenner** estimates the chance that the person is back at work within 12 months. People below 50% are invited early for a face-to-face conversation with a work coach; the others start with online services and are seen in person after about three months (UWV, algorithm register). The help works, but modestly: personal service raises the chance of work by about **2 percentage points** within a year, with about €201 million in societal benefits against €97 million in costs (UWV, 2021). So it matters *who* gets that early conversation.
 
 **Our question:** at the moment someone loses their job, can Dutch panel data – using only what is known at that moment – predict who will **still not be back in paid work twelve months later**? And does such a model make the same mistakes for everyone?
 
-**Does our data population match the people we want to use the model for?** Better than most survey data, but not exactly, and we say so openly. UWV's population is WW claimants at the start of their benefit. Our data are members of the LISS panel who, in the monthly data between November 2007 and 2025, went from paid work in one month to *job seeker following job loss* in the next: **2,019 job losses** of people aged 18–66. Because LISS follows the same people every month, we see the job loss *when it happens* and measure all characteristics *before* it – exactly UWV's intake moment – and we see what happens in the twelve months after. What does not match: not everyone who loses a job claims WW (for example after a very short job), and LISS records someone's main activity as reported by the household, not their benefit. Section 8 lists what this means.
+**Does our data match the people we want to use the model for?** Better than most survey data, but not exactly. UWV's population is WW claimants at the start of their benefit. Ours is **2,019 job losses** of LISS panel members aged 18–66 who, in the monthly data between November 2007 and 2025, went from paid work in one month to *job seeker following job loss* in the next. Because LISS follows the same people every month, we see the job loss when it happens, measure everything *before* it – UWV's intake moment – and see what happens in the twelve months after. What does not match: not everyone who loses a job claims WW, and LISS records someone's main activity as reported by the household, not their benefit (see the dataset card).
 
-## 2. User group
+## SDG 8 — Decent Work and Economic Growth
 
-**Who uses the prediction.** The users are **UWV work coaches** (*werkcoaches*) who run intake for new WW claimants, and the UWV team that decides how many people can be invited early (the threshold). Work coaches are professionals with a full caseload. They need a short, explainable signal at intake, *"this person has a high risk, invite early"*, and they need to be able to explain that signal to the job seeker. They use it at one specific moment: the first weeks of a WW benefit, before the regular three-month conversation.
+**Target 8.5** is *full and productive employment and decent work for all women and men, including young people and persons with disabilities*; **indicator 8.5.2** is the unemployment rate. Our model is about one concrete part of that target: preventing a short spell without work from turning into a long one, by getting scarce help to the right people in their first weeks of unemployment.
 
-**Who the prediction is about.** The people affected are **job seekers aged 18–66 who have just lost their job**. In our data, 23% of the job losses are of people aged 18–29, 43% of people aged 30–49 and 34% of people aged 50–66. **39%** were still not back in paid work twelve months later. That share rises steeply with age: 25% for 18–29, 36% for 30–49 and 53% for 50–66. Women are slightly more often long-term (41%) than men (37%), lower-educated people (44%) more often than higher-educated people (33%), people who migrated to the Netherlands themselves (57%) much more often than people with a Dutch background (38%), and people with a long-standing disease (51%) more often than people without (38%).
+## User group
 
-**Who is *not* the intended user.**
+**Who uses the prediction.** **UWV work coaches** (*werkcoaches*) who run intake for new WW claimants, and the UWV team that decides how many people can be invited early (the threshold). Work coaches have a full caseload. They need a short, explainable signal at intake – *"this person has a high risk, invite early"* – that they can explain to the job seeker. They use it at one moment: the first weeks of a WW benefit, before the regular three-month conversation.
+
+**Who the prediction is about.** **Job seekers aged 18–66 who have just lost their job.** In our data 23% of the job losses are of people aged 18–29, 43% of people aged 30–49 and 34% of people aged 50–66. **39%** were still not back in paid work twelve months later, and that share rises steeply with age: 25% for 18–29, 36% for 30–49 and 53% for 50–66. People who migrated to the Netherlands themselves (57%), people with a long-standing disease (51%) and lower-educated people (44%) are more often long-term; women (41%) slightly more often than men (37%).
+
+### Not for
+
 - **Employers and recruiters.** They must never use a risk score to screen applicants.
-- **Fraud and enforcement teams** (inside or outside UWV). A risk score of long-term unemployment says nothing about fraud. Leiden University found that imposing job-search obligations on WW recipients backfires ([Universiteit Leiden, 2024](https://www.universiteitleiden.nl/nieuws/2024/01/werklozen-verplichten-breder-naar-werk-te-zoeken-pakt-vaak-averechts-uit)).
-- **Municipalities, for bijstand clients.** That is a different population (people who are already long out of work), and our model was not built or tested for it.
+- **Fraud and enforcement teams** (inside or outside UWV). A risk of long-term unemployment says nothing about fraud, and imposing job-search obligations on WW recipients backfires (Universiteit Leiden, 2024).
+- **Municipalities, for bijstand clients.** That is a different population, and the model was not built or tested for it.
 
-**Who is missing from the data.** LISS questionnaires are in Dutch, so people who do not read Dutch well are hardly represented, and they are exactly a group UWV worries about. LISS gives a computer and internet connection to households without one, so people without internet are included, but people who do not want to take part in a monthly panel are not – and people who leave the panel during their unemployment are dropped (74 job losses), which may not be random. People under 18 or over 66, people living in institutions and undocumented workers are not in the data at all.
+### Who is missing from the data
 
-## 3. Why this fits this user group
+LISS questionnaires are in Dutch, so people who do not read Dutch well are hardly represented – exactly a group UWV worries about. LISS gives households without internet a computer, but people who do not want to join a monthly panel are not in it, and people who left the panel during their unemployment were dropped (74 job losses). People under 18 or over 66, people living in institutions and undocumented workers are not in the data at all.
 
-The work coach already makes this decision, with an algorithm and a threshold, so we don't add a new step to their work. We give them a model they can **check and explain**. The logistic regression shows *which* characteristics raise the risk, so a coach can say *"you are invited early mainly because…"*, which a black-box score cannot do. That matters for the job seeker's trust, and it fits UWV's own choice to publish its algorithms in a public algorithm register.
+## Solution: from raw data to a recommendation
 
-The simple alternative a coach could use without any model is *"invite everyone over 50"*; the notebook tests it as a baseline next to "invite nobody" (`DummyClassifier`). Inviting everyone is impossible with UWV's capacity. On the test set the age rule finds only 41% of the long-term cases; the logistic regression finds 62% at the same precision (about one in two invites is needed). *(✏️ after the final run: what the recommended threshold adds.)* Even if machine learning beats these rules, we position the model as *support* for the coach, never as the decision-maker (section 6).
+**Input:** what is known about one job seeker at intake – age, gender, education, household, urbanity, net income in the last job, how many months they were looking for work in the three years before, the job they lost (contract type, public or private, hours, years with the employer, sector, occupation, supervising others, firm size), and health before the job loss (self-rated health, a long-standing disease, how much health hinders daily life).
+**Output:** the probability that the person is still not back in paid work after 12 months, and an advice: *invite early* or *start with online services*.
 
-## 4. SDG 8
+The notebook runs from the raw files to that output with *Restart & Run All*. Each step has a markdown cell explaining what we did and why:
 
-**Target 8.5** is *full and productive employment and decent work for all women and men, including young people and persons with disabilities*. **Indicator 8.5.2** is the unemployment rate. Our model is about one concrete part of that target: preventing a short spell without work from becoming a long one, by getting scarce help to the right people in their first weeks of unemployment.
-
-## 5. The solution, step by step
-
-**Input:** characteristics of one job seeker that are known at intake. These are age, gender, education, household (size, children, partner, domestic situation), urbanity, net income in the last job, how many months they were looking for work in the three years before, and about the job they lost: contract type, public or private organisation, contract hours, years with the employer, sector, occupation, supervising others and firm size. Health before the job loss (self-rated health, a long-standing disease, how much health hinders daily activities) is included and tested separately (step 8c).
-**Output:** the probability that the person is still not back in paid work after 12 months, plus an advice: *invite early* or *online services first*.
-
-The notebook does the following, in order. Each step has a markdown cell explaining what we did and why.
-
-0. **Read the raw LISS files** (zipped or unzipped): the 220 monthly Background Variables files and every wave of the core studies *Work and Schooling* and *Health*. Only the columns we use are read.
-1. **Frame the problem.** Positive class = not back in paid work 12 months after the job loss. A false negative (missing someone who needs help) is worse than a false positive (one extra conversation). The main metric is **balanced accuracy**: "invite nobody" and "invite everyone" both score 0.5 on it, while accuracy would reward "invite nobody" (most people do find work within a year) and recall would reward "invite everyone". In step 9 we then move the threshold to raise recall.
-2. **Explore the data.** A **job loss** is the first month with *job seeker following job loss* directly after a month in paid work. We look at the eleven months after it to set the target, and drop job losses whose outcome is unknown because the person left the panel. Features are taken **only from before** the job loss: the last month in work, the 36 months before it, and the most recent *Work and Schooling* and *Health* interview in the 24 months before. Codes for *don't know* and impossible values (a 0- or 90-hour working week, a start year in the future) become missing values. We check duplicates and find that **people can lose a job more than once**, which decides the split. Everything measured after the job loss is left out on purpose (it describes the outcome), and migration background is kept *out* of the model and used only for fairness checks.
-3. **Split first.** A stratified 80/20 split, **grouped by person** (`StratifiedGroupKFold`), with `random_state=42`, before any pre-processing. No person appears in both training and test data.
-4. **Pipeline.** A `ColumnTransformer` handles numeric columns (median imputer with a *was missing* indicator, then `StandardScaler`) and categorical columns ("missing" as its own category, then one-hot encoding with categories of fewer than 10 people grouped together). It is fitted on training data only.
-5. **Baselines.** `DummyClassifier(most_frequent)` and the rule "invite everyone aged 50 or older".
-6. **Tuning.** `GridSearchCV` with the same 5 person-grouped stratified folds and balanced accuracy for all three models. KNN: `n_neighbors`, `weights`. Logistic regression: `C`, `class_weight`. Random forest: `max_depth`, `min_samples_leaf`, `class_weight`. The notebook plots the score against each main hyperparameter.
-7. **Test once.** Confusion matrices, precision, recall, F1 and balanced accuracy, with train, CV and test scores side by side.
-8. **Errors and groups.** The average profile of the missed long-term cases against the found ones, recall per age band, gender, education, migration background and long-standing disease, a with/without migration-background experiment with a proxy check, and a with/without health experiment.
-9. **Recommendation and threshold.** The threshold is chosen from cross-validated probabilities on the training set only.
-10. **Use it.** A made-up job seeker gets a probability and an advice.
+1. **Read the raw LISS files** (zipped or unzipped): 220 monthly Background Variables files and every wave of the core studies *Work and Schooling* and *Health*.
+2. **Frame the problem.** Positive class = not back in paid work 12 months after the job loss. A missed person (false negative) is worse than an extra conversation (false positive). Main metric: **balanced accuracy** – "invite nobody" and "invite everyone" both score 0.5 on it, while accuracy rewards inviting nobody and recall rewards inviting everyone.
+3. **Explore the data.** A **job loss** is the first month as *job seeker following job loss* directly after a month in paid work; the eleven months after it decide the target, and job losses whose outcome is unknown are dropped. Every feature is taken **from before** the job loss: the last month in work, the 36 months before it, and the latest *Work and Schooling* and *Health* interview in the 24 months before. *Don't know* codes and impossible values (a working week of 0 or 90 hours, a start year in the future) become missing. Everything measured after the job loss is left out on purpose, and migration background is used only for fairness checks.
+4. **Split first.** 80/20, stratified and **grouped by person** (`StratifiedGroupKFold`, `random_state=42`): 352 people lost a job more than once, and all their job losses stay on one side, so the model cannot score well by recognising people.
+5. **Pipeline.** A `ColumnTransformer` imputes the median plus a *was missing* column for numbers and a "missing" category for answers, scales numbers and one-hot encodes answers (categories under 10 people grouped). It is fitted on training data only.
+6. **Baselines.** `DummyClassifier(most_frequent)` and the rule "invite everyone aged 50 or older".
+7. **Tuning.** `GridSearchCV` with the same 5 person-grouped folds and balanced accuracy for all three models, with a plot of the score against `n_neighbors`, `C` and `max_depth`.
+8. **Test once.** Confusion matrices, precision, recall, F1 and balanced accuracy, with train, CV and test scores side by side.
+9. **Errors and groups.** The average profile of the missed long-term cases, recall per age band, gender, education, origin and long-standing disease, and two experiments: with/without migration background (plus a proxy check) and with/without health.
+10. **Recommend and use it.** A threshold chosen on cross-validated probabilities of the training set, the coefficients of the logistic regression, and a made-up job seeker who gets a probability and an advice.
 
 ### Comparison table (test set, scored once)
 
@@ -81,74 +84,79 @@ Training set 1,614 job losses, test set 405 (39% long-term in both), no person i
 
 Train / CV / test balanced accuracy: logistic regression 0.69 / 0.64 / 0.62 (mild overfitting), random forest 0.85 / 0.64 / 0.59 (clear overfitting), KNN 1.00 / 0.59 / 0.54 (memorises the training data).
 
-## 6. Recommendation
+## Recommendation
 
-**We recommend the logistic regression, as support for the work coach and not as the decision-maker.** In cross-validation it is as good as the random forest (0.640 ± 0.018 against 0.642 ± 0.022: a difference of 0.002, far smaller than the spread over the folds). It overfits much less (the forest scores 0.85 on its own training data), it holds up better on the test set (0.620 against 0.593), and a work coach can explain its prediction to the job seeker. KNN is clearly weaker and on the test set even below the age rule. We decided this rule – *equal in cross-validation, then the explainable model* – before looking at the test set.
+**We recommend the logistic regression, as support for the work coach and not as the decision-maker.**
 
-**Is it good enough? Not to decide alone.** A balanced accuracy of 0.62 means that in both groups roughly four in ten people are classified wrongly. *(✏️ after the final run: the threshold advice from step 9a and which groups the model misses, from step 8.)*
+- **Why this model.** In cross-validation it is as good as the random forest: a difference of 0.002, far below the spread over the folds (± 0.02). It overfits much less, holds up better on the test set (0.620 against 0.593), and a work coach can explain its prediction: older age, a long-standing disease and some sectors (public administration, catering, transport) raise the risk; a higher income, higher occupations and a university degree lower it. We decided beforehand that when models are equally good, we take the one that can be explained. KNN is clearly weaker – on the test set even below the age rule.
+- **Which threshold.** At 0.5 the model invites 47% of job seekers and finds 62% of the long-term cases. At **0.35** it finds 80% but invites 72%. Because a missed person is the worse mistake, we advise **0.35 if UWV can see about seven in ten people early**, and 0.5 if it cannot. That is a capacity decision for UWV.
+- **Is it good enough? Not to decide alone.** Roughly four in ten people in each group are classified wrongly, and the mistakes fall unevenly: the model finds only 29% of the long-term unemployed aged 18–29 and 46% of the men, against 77% of the women. So the score may only **add** people to the early-invitation list – a coach can always invite someone, and should look in particular at young people and people whose job history is unknown – and it must never be used for obligations, sanctions or fraud detection. Before any real use it must be retrained on recent UWV data of WW claimants, with the group check repeated every time.
 
-**What holds whatever the numbers turn out to be:**
-- The score may only **add** people to the early-invitation list. A low score must never mean less help.
-- It must never be used for obligations, sanctions or fraud detection.
-- Before any real use it must be retrained on recent UWV data of actual WW claimants, with the subgroup check repeated each time.
+Our numbers cannot be compared with UWV's "70% correct": that figure is accuracy, on a different population, with a questionnaire we don't have.
 
-Our results cannot be compared with UWV's "70% correct". That figure is accuracy, on a different population, with a questionnaire we don't have.
+## Problem–solution fit
 
-## 7. Ethical reflection
+The work coach already makes this decision with an algorithm and a threshold, so we don't add a new step to their work – we give them a model they can **check and explain**, which fits UWV's own choice to publish its algorithms in a public register.
 
-This model scores people at a vulnerable moment, just after losing their job, and decides who gets help first. A false negative means waiting three months or more for personal help while their WW runs down, and the evidence says that help raises their chance of work. A false positive costs a work coach one conversation, and costs the job seeker little, *as long as the conversation is support and not pressure*.
+**Why the metric fits.** For a work coach the costly mistake is the person who is not invited and stays stuck; an extra conversation costs little. Balanced accuracy stops a model from looking good by inviting nobody or everybody, and the threshold in step 9 then trades extra conversations for fewer missed people, with the cost shown.
 
-**Unequal errors.** A model that learns that age predicts long-term unemployment will tend to miss young people who *do* get stuck: they "look like" someone who will find work quickly. Step 8 measures recall per age band, gender, education, migration background and long-standing disease. *(✏️ after the final run: which groups the model misses most, with the numbers.)*
+**Why machine learning beats the simple alternatives.** A coach without a model could invite everyone over 50. On the test set that rule finds only **41%** of the long-term cases; the logistic regression finds **62%** at the same precision (about one in two invitations is needed), and 80% at threshold 0.35. Inviting everyone is impossible with UWV's capacity, and inviting nobody is what happens without early help. The gain is real but modest, which is why we position the model as support for the coach.
 
-**Migration background.** Scoring people on where they or their parents were born is exactly what the District Court of The Hague rejected in the SyRI case (2020) and what went wrong in the childcare benefits scandal. We decided *before* seeing the result to leave it out unless it would improve the model far beyond the spread over the folds, and we test it (step 8b). Removing the column is not enough, though: the proxy check measures how well the remaining features still reveal origin, so we **report recall per origin group** as a standing fairness check instead of assuming the model is blind. *(✏️ after the final run: the with/without result and the proxy ROC-AUC.)*
+## Ethical reflection
 
-**Health.** Health is a special category of personal data under the GDPR. Health problems can make finding work harder, so using it could steer early help to people who need it – but a work coach may only use it with a good reason, and a job seeker may not want to share it. We test the model with and without health (step 8c) and report recall for people with a long-standing disease. *(✏️ after the final run: what health adds, and the decision.)*
+The full reflection is in [`ETHICS.md`](ETHICS.md): seven risks specific to this model and this data, each with its consequence for job seekers, what we did, and what is not solved. In short:
 
-**Privacy and consent.** LISS panel members agreed to take part in scientific research and are identified only by an encrypted number; users of the data sign a statement not to pass it on and not to publish information about individual people. So: the data is not in this repository (`data/liss/` is in `.gitignore`); the notebook never displays rows, person numbers or real cases; groups smaller than 10 people are hidden in every table; the example in step 10 is made up; and we do not save trained models, because a KNN model contains its training rows. Using panel data to build a *study prototype* fits the consent given; a production model at UWV would need UWV's own data and legal basis.
+- **The model misses the wrong people:** young people (recall 0.29) and men (0.46 against 0.77 for women). We chose balanced accuracy, lowered the threshold to 0.35, check recall per group, and made it a rule that a score can only add help.
+- **Migration background** is left out: it did not improve the model (0.633 with, 0.640 without). The other features still reveal origin (ROC-AUC 0.68), so recall per origin group is a standing check.
+- **Health** is special-category data. It adds little overall but helps find people with a long-standing disease (recall 0.68 → 0.79), so we keep it only if answering is voluntary and declining can never lower someone's chance of an invite.
+- **Privacy:** the LISS data is not in this repository, the notebook shows no individual people, groups under 10 are hidden and no model is saved.
 
-**What we did about these risks:**
-- We chose balanced accuracy as the main metric, so that "invite nobody" or "invite only older people" cannot look good.
-- We lower the threshold to reduce missed people, and show the cost (step 9a).
-- We split by person, so the model cannot score well by recognising people it has already seen.
-- We left migration background out and check recall per group, including a proxy check.
-- We tested whether health is needed instead of assuming it.
-- We set the rule that the score may only add help, never remove it, and must never be used for sanctions.
-
-**This model must not be used:** to decide about people outside the population it was trained on (people under 18 or over 66, bijstand clients, people who never had a job); by employers; or for fraud detection or sanctions.
-
-## 8. Dataset card
+## Dataset card
 
 | | |
 |---|---|
 | **Source** | LISS panel (Longitudinal Internet studies for the Social Sciences), [LISS Data Archive](https://www.dataarchive.lissdata.nl/); download instructions in [`data/README.md`](data/README.md) |
 | **Collected by** | Centerdata (Tilburg University, The Netherlands) |
-| **How** | Online questionnaires completed by a panel of about 5,000 households drawn as a true probability sample from the population register by CBS; households without a computer or internet get one. The household's contact person updates the *Background Variables* (including everyone's main activity) every month; the core studies *Work and Schooling* and *Health* are asked once a year |
-| **When** | Background Variables: November 2007 to March 2026 (one month, November 2022, is missing). Work and Schooling: 18 waves, 2008–2025. Health: 18 waves, 2007–2025 |
-| **Licence** | Free for scientific research after registering and signing the *statement on the use of LISS data*; the data may not be passed on to others. Publications must acknowledge the LISS panel (see `data/README.md`) |
-| **Size** | Raw: 2,425,135 person-months of 34,301 people; about 5,000–7,000 respondents per core-study wave. After building job losses (from paid work to job seeking, outcome known after 12 months, aged 18–66): **2,019 rows** (one row per job loss); 22 features (10 numeric, 12 categorical) + migration background for fairness checks only |
-| **Target** | `long_term`: not back in paid work (LISS `belbezig` 1–3) in the eleven months after the first month of job seeking. 1 = yes (**39%**), 0 = no (61%) |
-| **Known limitations** | (1) *Job seeker following job loss* is the main activity reported by the household, not WW receipt. (2) Job and health features come from the most recent interview in the 24 months before the job loss: they are missing for about 30% of job losses, and may describe an earlier job if someone changed jobs. (3) 74 job losses were dropped because the person left the panel before the outcome was known, which may not be random. (4) Because November 2022 is missing, job losses in November and December 2022 are partly not detected. (5) One person can have several job losses; we split by person. (6) Only people who answer Dutch questionnaires. (7) 2008–2025 includes the financial crisis and the COVID period; chances in a new period may differ. (8) The analysis is unweighted, so it describes the panel, not exactly the Dutch population. |
+| **How** | Online questionnaires completed by a panel of about 5,000 households drawn as a probability sample from the population register by CBS; households without a computer or internet get one. The household's contact person updates the *Background Variables* (including everyone's main activity) every month; the core studies *Work and Schooling* and *Health* are asked once a year |
+| **When** | Background Variables: November 2007 to March 2026 (November 2022 is missing). Work and Schooling: 18 waves, 2008–2025. Health: 18 waves, 2007–2025 |
+| **Licence** | Free for scientific research after registering and signing the *statement on the use of LISS data*; the data may not be passed on. Publications acknowledge the LISS panel (see `data/README.md`) |
+| **Size** | Raw: 2,424,987 person-months of 34,301 people; 101,691 Health and 104,288 Work and Schooling interviews. After building job losses (paid work → job seeking, outcome known after 12 months, aged 18–66): **2,019 rows** (one per job loss) of 1,455 people; 22 features (10 numeric, 12 categorical) + migration background for fairness checks only |
+| **Target** | `long_term`: not back in paid work (LISS `belbezig` 1–3) in the eleven months after the first month of job seeking. 1 = yes (**39.1%**), 0 = no (60.9%) |
+| **Known limitations** | (1) *Job seeker following job loss* is the main activity reported by the household, not WW receipt. (2) Job and health features come from the latest interview in the 24 months before the job loss: missing for about 30% of job losses, and they may describe an earlier job. (3) 74 job losses were dropped because the person left the panel before the outcome was known, which may not be random. (4) Because November 2022 is missing, job losses in November and December 2022 are partly not detected. (5) 352 people have more than one job loss; we split by person. (6) Only people who answer Dutch questionnaires. (7) 2008–2025 includes the financial crisis and COVID; chances in a new period may differ. (8) The analysis is unweighted, so it describes the panel, not exactly the Dutch population |
 
-## 9. How to run
+## How to run
 
-The LISS data cannot be downloaded by a script, so the notebook does not run until you have your own copy:
+The LISS data cannot be downloaded by a script, so the notebook only runs with your own copy:
 
 1. Request access at the [LISS Data Archive](https://www.dataarchive.lissdata.nl/) and sign the statement on the use of the data.
-2. Download, in **Stata (.dta) format, English version**: *Background Variables* (all months), *Work and Schooling* (all waves) and *Health* (all waves). Put them, zipped or unzipped, in `data/liss/background/`, `data/liss/work_schooling/` and `data/liss/health/` (details in [`data/README.md`](data/README.md)). The notebook unzips them itself.
-3. Optional: `python scripts/liss_inventory.py` writes an overview of all variables and a count of job losses (already done: [`docs/liss_overview.md`](docs/liss_overview.md)).
-4. **Locally:** `pip install pandas numpy scikit-learn matplotlib notebook`, then open `uwv_long_term_unemployment.ipynb` from the repository folder and choose *Restart & Run All*. Reading the 220 monthly files takes a few minutes.
-5. **In Google Colab:** put the same folders in your own Google Drive under `MyDrive/liss/` (do not share that folder), open the notebook in Colab and choose *Runtime → Run all*. The notebook asks for permission to mount your Drive. No installs needed.
+2. Download in **Stata (.dta) format, English version**: *Background Variables* (all months), *Work and Schooling* (all waves) and *Health* (all waves), and put them – zipped or unzipped – in `data/liss/background/`, `data/liss/work_schooling/` and `data/liss/health/` ([details](data/README.md)). The notebook unzips them itself.
+3. **Locally:** `pip install pandas numpy scikit-learn matplotlib notebook` (or `ipykernel` for VS Code), open `uwv_long_term_unemployment.ipynb` from the repository folder and choose *Restart & Run All*. Reading the 220 monthly files takes a few minutes.
+4. **In Google Colab:** put the same folders in your own Google Drive under `MyDrive/liss/` (do not share that folder), open the notebook in Colab and choose *Runtime → Run all*; the notebook asks to mount your Drive. No installs needed.
 
-Built and tested with Python 3.11, pandas 3.0, numpy 2.4, scikit-learn 1.9 and matplotlib. The notebook only uses packages that Colab has by default. `random_state=42` is used everywhere. Other package versions can shift numbers in the third decimal.
+Built and run with Python 3.12, pandas 3.0, numpy 2.5, scikit-learn 1.9 and matplotlib. `random_state=42` is used everywhere; other package versions can shift numbers in the third decimal.
 
-## 10. Sources
+## How we used the tool
+
+scikit-learn does every modelling step: `StratifiedGroupKFold` for the person-grouped test split and the cross-validation folds, `ColumnTransformer` with `SimpleImputer`, `StandardScaler` and `OneHotEncoder` inside a `Pipeline` so nothing is fitted on the test data, `DummyClassifier` and a home-made age rule as baselines, `GridSearchCV` to tune `KNeighborsClassifier`, `LogisticRegression` and `RandomForestClassifier` on the same folds and metric, `cross_val_predict` for the threshold and the fairness experiments, and `sklearn.metrics` for the confusion matrices and scores. Without it there is no model to compare and no prediction for the work coach.
+
+## What we learned
+
+### [Name 1]
+
+*TODO: write in your own words.*
+
+### [Name 2]
+
+*TODO: write in your own words.*
+
+## Sources
 
 - LISS panel – [LISS Data Archive](https://www.dataarchive.lissdata.nl/), Centerdata (Tilburg University, The Netherlands)
+- UWV (2026) – [Sociale zekerheid in 2025](https://www.uwv.nl/nl/publicaties/jaar-en-tertaalverslagen/2025/sociale-zekerheid-in-2025-stijging-wia-instroom-vlakt-af)
 - UWV – [Werkverkenner (algorithm register)](https://www.uwv.nl/nl/over-uwv/algoritmeregister-uwv/werkverkenner)
-- UWV – [Effect of personal services on job chances and WW duration (2021)](https://www.uwv.nl/nl/publicaties/kennis/2021/effect-persoonlijke-dienstverlening-op-werkkans-en-ww-duur)
-- UWV – [Sociale zekerheid in 2025](https://www.uwv.nl/nl/publicaties/jaar-en-tertaalverslagen/2025/sociale-zekerheid-in-2025-stijging-wia-instroom-vlakt-af)
+- UWV (2021) – [Effect of personal services on job chances and WW duration](https://www.uwv.nl/nl/publicaties/kennis/2021/effect-persoonlijke-dienstverlening-op-werkkans-en-ww-duur)
 - UWV – [Kennisverslag 2015-3 (work-orientation conversation)](https://www.uwv.nl/assets-kai/files/6fc77bdf-5d12-4389-af70-84c93e1e95c0/uwv-kennisverslag-ukv-2015-3.pdf)
-- CBS – [Werklozen iets langer op zoek naar werk (2025)](https://www.cbs.nl/nl-nl/nieuws/2025/38/werklozen-iets-langer-op-zoek-naar-werk)
-- Universiteit Leiden – [Werklozen verplichten breder naar werk te zoeken pakt vaak averechts uit (2024)](https://www.universiteitleiden.nl/nieuws/2024/01/werklozen-verplichten-breder-naar-werk-te-zoeken-pakt-vaak-averechts-uit)
+- CBS (2025) – [Werklozen iets langer op zoek naar werk](https://www.cbs.nl/nl-nl/nieuws/2025/38/werklozen-iets-langer-op-zoek-naar-werk)
+- Universiteit Leiden (2024) – [Werklozen verplichten breder naar werk te zoeken pakt vaak averechts uit](https://www.universiteitleiden.nl/nieuws/2024/01/werklozen-verplichten-breder-naar-werk-te-zoeken-pakt-vaak-averechts-uit)
 - District Court of The Hague – SyRI judgment, 5 February 2020 (ECLI:NL:RBDHA:2020:865)
 - scikit-learn – [documentation](https://scikit-learn.org/stable/)
