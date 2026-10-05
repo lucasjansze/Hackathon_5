@@ -1,7 +1,7 @@
 # Who needs early help?
 
 **AI for Good — Hackathon 5: Model Showdown**
-*[Name 1] & [Name 2]*
+*Lucas Jansze & Minhyeok Sung*
 
 A scikit-learn model that predicts, at the moment someone loses their job, whether they will still be without paid work a year later – so that UWV's work coaches can invite the people who need it most for an early face-to-face conversation.
 
@@ -141,11 +141,11 @@ scikit-learn does every modelling step: `StratifiedGroupKFold` for the person-gr
 
 ## What we learned
 
-### [Name 1]
+### [Lucas Jansze]
 
 *TODO: write in your own words.*
 
-### [Name 2]
+### [Minhyeok Sung]
 
 *TODO: write in your own words.*
 
