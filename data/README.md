@@ -35,5 +35,3 @@ The full list of variables in every file, with question texts and answer codes, 
 Use is subject to the *statement on the use of LISS data* and the [LISS general terms and conditions](https://www.lissdata.nl/general-terms-and-conditions): use for scientific research, no passing on of the data, no publication of information about individual persons or households, and acknowledgement in every publication. Our acknowledgement:
 
 > In this project use is made of data of the LISS (Longitudinal Internet studies for the Social Sciences) panel administered by Centerdata (Tilburg University, The Netherlands).
-
-*TODO: check this wording against the statement you signed, and ask Centerdata whether this portfolio has to be reported as a publication.*
