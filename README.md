@@ -234,11 +234,11 @@ Everything after loading the data is done with scikit-learn, and the project wou
 
 ### Lucas Jansze
 
-*TODO: write in your own words.*
+I learned that the most important decision in a project can be one that nobody sees. In our data 352 people lost a job more than once, and a normal random split would have given us a better score without any warning that it was wrong. I also learned that a better model does not always help: three different kinds of model ended up almost the same, because much of what decides who finds work is not in the data. And I learned to do the fairness check early. We found too late that gender should have been left out of the model, by the same rule we used for migration background.
 
 ### Minhyeok Sung
 
-*TODO: write in your own words.*
+I thought a computer model would be much better than a simple rule, but our model was only a little better than "invite everyone aged 40 or older." So I learned to always compare a model with something simple. I also learned that one overall score can hide problems: our model misses most young people who stay unemployed for a long time. Finally, I learned that a model like this should only be used to give people extra help, never to take help away.
 
 ## Sources
 
