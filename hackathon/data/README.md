@@ -23,7 +23,8 @@ The full list of variables in every file, with question texts and answer codes, 
 | Background Variables | `nomem_encr` | encrypted person number: linking files and splitting by person; never shown |
 | | `wave` | month of the file |
 | | `belbezig` | primary occupation: finds job losses (1-3 paid work → 4 job seeker following job loss) and the target |
-| | `leeftijd`, `geslacht`, `oplmet`, `aantalhh`, `aantalki`, `partner`, `woonvorm`, `sted`, `nettoink_f` | age, gender, education, household size, children at home, partner, domestic situation, urbanity, net monthly income (imputed), all from the last month in work |
+| | `leeftijd`, `oplmet`, `aantalhh`, `aantalki`, `partner`, `woonvorm`, `sted`, `nettoink_f` | age, education, household size, children at home, partner, domestic situation, urbanity, net monthly income (imputed), all from the last month in work |
+| | `geslacht` | gender, for fairness checks only, not a feature |
 | | `herkomstgroep` | migration background, for fairness checks only, not a feature |
 | Work and Schooling | question 121, 122, 126, 134, 402, 404, 409, 408 / 528 | contract type, public or private organisation, contract hours, year started with the employer, sector, occupation, supervises others, firm size (408 until 2010, 528 from 2011) |
 | | `<prefix>_m` | interview month, to take the most recent interview *before* the job loss |
