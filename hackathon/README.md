@@ -229,6 +229,8 @@ Built and run with Python 3.12, pandas 3.0, numpy 2.5, scikit-learn 1.9 and matp
 
 Everything after loading the data is done with scikit-learn, and the project would not exist without it. `StratifiedGroupKFold` makes the test split and the folds, which is what keeps one person from ending up on both sides. The `Pipeline` with a `ColumnTransformer` makes sure imputing, scaling and encoding are learned from training data only. `GridSearchCV` tunes `KNeighborsClassifier`, `LogisticRegression` and `RandomForestClassifier` on the same folds and the same metric, which is what makes the comparison fair. `DummyClassifier` gives the baseline, `cross_val_predict` gives the probabilities for choosing the threshold and for the fairness experiments, and `sklearn.metrics` gives the confusion matrices and scores.
 
+**How we used AI.** We searched for topics and datasets ourselves and made a first plan: the problem, the user and the data. We improved that plan with Claude. We then wrote a plan for the code, step by step along the ten required steps, and implemented it with Claude Code, with us directing and checking each step. Claude also helped with improving the wording of this README and the slides; we checked every number against the notebook outputs.
+
 ## What we learned
 
 ### Lucas Jansze
