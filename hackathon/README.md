@@ -17,7 +17,7 @@ The project is also a check on the idea itself. UWV already sorts new claimants 
 | Tool | scikit-learn 1.9: KNN, logistic regression and random forest |
 | SDG | SDG 8 Decent Work and Economic Growth, target 8.5 |
 
-> **You cannot rerun this notebook without your own copy of the data.** LISS data may not be passed on, so we could not put it in the repository and a download cell is not possible either. Anyone can request access for free (see [How to run](#how-to-run)). Until then the saved outputs in the notebook are the proof that it runs from the raw files to the final prediction. The notebook shows no individual people: only counts, percentages and scores for groups of at least 10.
+> **You cannot rerun this notebook without your own copy of the data.** LISS data may not be passed on, so we could not put it in the repository and a download cell is not possible either. Anyone can request access for free (see [How to run](#how-to-run)). Until then the saved outputs in the notebook are the proof that it runs from the raw files to the final prediction. The notebook shows no individual people: only counts, percentages and scores for groups, and a group smaller than 10 people is not shown separately.
 
 ---
 
