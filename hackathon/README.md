@@ -13,8 +13,7 @@ The project is also a check on the idea itself. UWV already sorts new claimants 
 | Ethical reflection | [`ETHICS.md`](ETHICS.md) |
 | Data | LISS panel, not in this repository. How to get it: [`data/README.md`](data/README.md) |
 | Variables, question texts and answer codes | [`docs/liss_overview.md`](docs/liss_overview.md), made by [`scripts/liss_inventory.py`](scripts/liss_inventory.py). Contains no respondent data |
-| Project plan | [`docs/Plan_UWV_Hackathon5.docx`](docs/Plan_UWV_Hackathon5.docx). Written at the start, when we still planned to use ESS data |
-| Slides | [`Who_needs_early_help_Hackathon5_presentation_10slides.pptx`](Who_needs_early_help_Hackathon5_presentation_10slides.pptx), with speaker notes |
+| Slides | [`Who_needs_early_help.pptx`](../presentation/Who_needs_early_help.pptx), with speaker notes |
 | Tool | scikit-learn 1.9: KNN, logistic regression and random forest |
 | SDG | SDG 8 Decent Work and Economic Growth, target 8.5 |
 
@@ -220,8 +219,8 @@ The full reflection is in [`ETHICS.md`](ETHICS.md). The short version: the bigge
 The LISS data cannot be downloaded by a script, so the notebook only runs with your own copy.
 
 1. Request access at the [LISS Data Archive](https://www.dataarchive.lissdata.nl/) and sign the statement on the use of the data.
-2. Download in Stata (.dta) format, English version: *Background Variables* (all months), *Work and Schooling* (all waves) and *Health* (all waves). Put them, zipped or unzipped, in `data/liss/background/`, `data/liss/work_schooling/` and `data/liss/health/` ([details](data/README.md)). The notebook unzips them itself.
-3. Locally: `pip install pandas numpy scikit-learn matplotlib notebook` (or `ipykernel` for VS Code), open `uwv_long_term_unemployment.ipynb` from the repository folder and choose *Restart & Run All*. Reading the 220 monthly files takes a few minutes.
+2. Download in Stata (.dta) format, English version: *Background Variables* (all months), *Work and Schooling* (all waves) and *Health* (all waves). Put them, zipped or unzipped, in `data/liss/background/`, `data/liss/work_schooling/` and `data/liss/health/` inside the `hackathon/` folder ([details](data/README.md)). The notebook unzips them itself.
+3. Locally: `pip install pandas numpy scikit-learn matplotlib notebook` (or `ipykernel` for VS Code), open `uwv_long_term_unemployment.ipynb` from the `hackathon/` folder and choose *Restart & Run All*. Reading the 220 monthly files takes a few minutes.
 4. In Google Colab: put the same folders in your own Google Drive under `MyDrive/liss/` (do not share that folder), open the notebook in Colab and choose *Runtime → Run all*. The notebook asks to mount your Drive. No installs are needed.
 
 Built and run with Python 3.12, pandas 3.0, numpy 2.5, scikit-learn 1.9 and matplotlib. `random_state=42` is used everywhere. Other package versions can shift numbers in the third decimal.
